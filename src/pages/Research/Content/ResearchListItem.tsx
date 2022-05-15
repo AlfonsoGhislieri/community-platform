@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import * as React from 'react'
 import { Card, Flex } from 'theme-ui'
 import Heading from 'src/components/Heading'
-import { Link } from 'src/components/Links'
+import { Link } from 'theme-ui'
 import { ModerationStatusText } from 'src/components/ModerationStatusText'
 import { Text } from 'theme-ui'
 import type { IResearch } from 'src/models/research.models'
@@ -17,7 +17,7 @@ const ResearchListItem: React.FC<IProps> = ({ item }) => (
   <Card data-cy="research=list-item" data-id={item._id} mb={3}>
     <Flex sx={{ width: '100%', position: 'relative' }}>
       <Link
-        to={`/research/${encodeURIComponent(item.slug)}`}
+        href={`/research/${encodeURIComponent(item.slug)}`}
         key={item._id}
         sx={{ width: '100%' }}
       >
