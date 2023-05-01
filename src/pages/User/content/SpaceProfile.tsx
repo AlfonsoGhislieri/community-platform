@@ -3,21 +3,19 @@ import type {
   IMAchineBuilderXp,
   IOpeningHours,
   PlasticTypeLabel,
-} from 'src/models/user_pp.models'
+} from 'src/models/userPreciousPlastic.models'
 
-import Heading from 'src/components/Heading'
-import { Box, Image } from 'theme-ui'
+import { Heading, Box, Image, Flex, Paragraph } from 'theme-ui'
 // import slick and styles
 import Slider from 'react-slick'
 import 'src/assets/css/slick.min.css'
 import styled from '@emotion/styled'
-import Flex from 'src/components/Flex'
-import { Text } from 'src/components/Text'
 
-import { MemberBadge } from 'oa-components'
+import { MemberBadge, Icon, Username, UserStatistics } from 'oa-components'
 
-import theme from 'src/themes/styled.theme'
-import { Icon, FlagIcon } from 'oa-components'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
 
 // Plastic types
 import HDPEIcon from 'src/assets/images/plastic-types/hdpe.svg'
@@ -33,9 +31,11 @@ import PVCIcon from 'src/assets/images/plastic-types/pvc.svg'
 import type { IUploadedFileMeta } from 'src/stores/storage'
 import type { IConvertedFileMeta } from 'src/types'
 
-import { UserStats } from './UserStats'
 import UserContactAndLinks from './UserContactAndLinks'
 import { UserAdmin } from './UserAdmin'
+import { ProfileType } from 'src/modules/profile/types'
+import { isUserVerified } from 'src/common/isUserVerified'
+import { useUserUsefulCount } from 'src/common/userUsefulCount'
 
 interface IBackgroundImageProps {
   bgImg: string
@@ -47,11 +47,16 @@ interface IProps {
 
 const MobileBadge = styled.div`
   position: relative;
-  max-width: 120px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 0;
+
+  @media only screen and (min-width: ${theme.breakpoints[1]}) {
+    align-items: center;
+  }
 
   @media only screen and (min-width: ${theme.breakpoints[2]}) {
-    max-width: 150px;
     margin-top: -50%;
     margin-left: auto;
     margin-right: auto;
@@ -69,7 +74,9 @@ const ProfileWrapper = styled(Box)`
   align-self: center;
 `
 
-const ProfileWrapperCarousel = styled.div``
+const ProfileWrapperCarousel = styled.div`
+  line-height: 0;
+`
 
 const OpeningHours = styled.p`
   color: ${theme.colors.grey};
@@ -84,17 +91,6 @@ const PlasticType = styled.div`
   &:last-child {
     margin-right: 0;
   }
-`
-
-const ProfileContentWrapper = styled(Flex)`
-  background-color: ${theme.colors.white};
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  /* margin-top: -112px;
-
-  @media only screen and (min-width: ${theme.breakpoints[1]}) {
-      margin-top: 0;
-  } */
 `
 
 const SliderImage = styled.div`
@@ -153,23 +149,23 @@ const sliderSettings = {
 
 // Comment on 6.05.20 by BG : renderCommitmentBox commented for now, will be reused with #974
 
-function renderPlasticTypes(plasticTypes: Array<PlasticTypeLabel>) {
-  function renderIcon(type: string) {
+const renderPlasticTypes = (plasticTypes: Array<PlasticTypeLabel>) => {
+  const renderIcon = (type: string) => {
     switch (type) {
       case 'hdpe':
-        return <Image src={HDPEIcon} />
+        return <Image loading="lazy" src={HDPEIcon} />
       case 'ldpe':
-        return <Image src={LDPEIcon} />
+        return <Image loading="lazy" src={LDPEIcon} />
       case 'other':
-        return <Image src={OtherIcon} />
+        return <Image loading="lazy" src={OtherIcon} />
       case 'pet':
-        return <Image src={PETIcon} />
+        return <Image loading="lazy" src={PETIcon} />
       case 'pp':
-        return <Image src={PPIcon} />
+        return <Image loading="lazy" src={PPIcon} />
       case 'ps':
-        return <Image src={PSIcon} />
+        return <Image loading="lazy" src={PSIcon} />
       case 'pvc':
-        return <Image src={PVCIcon} />
+        return <Image loading="lazy" src={PVCIcon} />
       default:
         return null
     }
@@ -191,35 +187,31 @@ function renderPlasticTypes(plasticTypes: Array<PlasticTypeLabel>) {
   )
 }
 
-function renderOpeningHours(openingHours: Array<IOpeningHours>) {
-  return (
-    <div>
-      <h4>We're open on:</h4>
-      {openingHours.map((openingObj) => {
-        return (
-          <OpeningHours key={openingObj.day}>
-            {openingObj.day}: {openingObj.openFrom} - {openingObj.openTo}
-          </OpeningHours>
-        )
-      })}
-    </div>
-  )
-}
+const renderOpeningHours = (openingHours: Array<IOpeningHours>) => (
+  <div>
+    <h4>We're open on:</h4>
+    {openingHours.map((openingObj) => {
+      return (
+        <OpeningHours key={openingObj.day}>
+          {openingObj.day}: {openingObj.openFrom} - {openingObj.openTo}
+        </OpeningHours>
+      )
+    })}
+  </div>
+)
 
-function renderMachineBuilderXp(machineBuilderXp: Array<IMAchineBuilderXp>) {
-  return (
-    <>
-      <h4>We offer the following services:</h4>
-      {machineBuilderXp.map((machineExperience, index) => {
-        return (
-          <MachineExperienceTab key={`machineXp-${index}`}>
-            {machineExperience}
-          </MachineExperienceTab>
-        )
-      })}
-    </>
-  )
-}
+const renderMachineBuilderXp = (machineBuilderXp: Array<IMAchineBuilderXp>) => (
+  <>
+    <h4>We offer the following services:</h4>
+    {machineBuilderXp.map((machineExperience, index) => {
+      return (
+        <MachineExperienceTab key={`machineXp-${index}`}>
+          {machineExperience}
+        </MachineExperienceTab>
+      )
+    })}
+  </>
+)
 
 export const SpaceProfile = ({ user }: IProps) => {
   let coverImage = [
@@ -247,14 +239,21 @@ export const SpaceProfile = ({ user }: IProps) => {
   )
 
   const userCountryCode =
-    user.location?.countryCode || user.country?.toLowerCase() || null
+    user.location?.countryCode || user.country?.toLowerCase() || undefined
 
   return (
-    <ProfileWrapper mt={4} mb={6}>
+    <ProfileWrapper mt={4} mb={6} data-cy="SpaceProfile">
       <ProfileWrapperCarousel>
         <Slider {...sliderSettings}>{coverImage}</Slider>
       </ProfileWrapperCarousel>
-      <ProfileContentWrapper mt={['-122px', '-122px', 0]} px={[2, 4]} py={4}>
+      <Flex
+        sx={{
+          px: [2, 4],
+          py: 4,
+          background: 'white',
+          borderTop: '2px solid',
+        }}
+      >
         <Box sx={{ width: ['100%', '100%', '80%'] }}>
           <Box sx={{ display: ['block', 'block', 'none'] }}>
             <MobileBadge>
@@ -265,30 +264,20 @@ export const SpaceProfile = ({ user }: IProps) => {
           <Flex
             sx={{
               alignItems: 'center',
-              pt: ['40px', '40px', '0'],
+              pt: ['0', '40px', '0'],
             }}
           >
-            {userCountryCode && (
-              <FlagIcon
-                mr={2}
-                code={userCountryCode}
-                style={{ display: 'inline-block' }}
-              />
-            )}
-            <Text
-              large
-              my={2}
-              sx={{ color: `${theme.colors.lightgrey} !important` }}
-              data-cy="userName"
-            >
-              {user.userName}
-            </Text>
+            <Username
+              user={{
+                userName: user.userName,
+                countryCode: userCountryCode,
+              }}
+              isVerified={isUserVerified(user.userName)}
+            />
           </Flex>
 
           <Flex sx={{ alignItems: 'center' }}>
             <Heading
-              medium
-              bold
               color={'black'}
               mb={3}
               style={{ wordBreak: 'break-word' }}
@@ -297,28 +286,17 @@ export const SpaceProfile = ({ user }: IProps) => {
               {user.displayName}
             </Heading>
           </Flex>
-          {user.about && (
-            <Text
-              preLine
-              paragraph
-              mt="0"
-              mb="20px"
-              color={theme.colors.grey}
-              sx={{ width: ['80%', '100%'] }}
-            >
-              {user.about}
-            </Text>
-          )}
+          {user.about && <Paragraph>{user.about}</Paragraph>}
 
-          {user.profileType === 'collection-point' &&
+          {user.profileType === ProfileType.COLLECTION_POINT &&
             user.collectedPlasticTypes &&
             renderPlasticTypes(user.collectedPlasticTypes)}
 
-          {user.profileType === 'collection-point' &&
+          {user.profileType === ProfileType.COLLECTION_POINT &&
             user.openingHours &&
             renderOpeningHours(user.openingHours)}
 
-          {user.profileType === 'machine-builder' &&
+          {user.profileType === ProfileType.MACHINE_BUILDER &&
             user.machineBuilderXp &&
             renderMachineBuilderXp(user.machineBuilderXp)}
 
@@ -336,10 +314,34 @@ export const SpaceProfile = ({ user }: IProps) => {
           <MobileBadge>
             <MemberBadge size={150} profileType={user.profileType} />
 
-            <UserStats user={user} />
+            <Box
+              sx={{
+                mt: 3,
+              }}
+            >
+              <UserStatistics
+                userName={user.userName}
+                country={user.location?.country}
+                isVerified={isUserVerified(user.userName)}
+                isSupporter={!!user.badges?.supporter}
+                howtoCount={
+                  user.stats
+                    ? Object.keys(user.stats!.userCreatedHowtos).length
+                    : 0
+                }
+                eventCount={
+                  user.stats
+                    ? Object.keys(user.stats!.userCreatedEvents).length
+                    : 0
+                }
+                // ** TODO: Beta-tester Authentication needs to be removed from useUserUsefulCount
+                // ** once aggregations are fixed
+                usefulCount={useUserUsefulCount(user) ?? 0}
+              />
+            </Box>
           </MobileBadge>
         </Box>
-      </ProfileContentWrapper>
+      </Flex>
     </ProfileWrapper>
   )
 }

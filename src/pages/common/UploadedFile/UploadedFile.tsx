@@ -1,9 +1,8 @@
 import * as React from 'react'
-import type { IFirebaseUploadInfo } from 'src/components/FirebaseFileUploader/FirebaseFileUploader'
+import type { IFirebaseUploadInfo } from 'src/pages/common/UploadedFile/FirebaseFileUploader'
 import { storage } from 'src/utils/firebase'
 import './UploadedFile.scss'
-import { Button } from 'oa-components'
-import { Icon } from 'oa-components'
+import { Button, ExternalLink, Icon } from 'oa-components'
 import ImagePreview from './ImagePreview'
 import { logger } from 'src/logger'
 
@@ -25,11 +24,6 @@ interface IState {
 
 export class UploadedFile extends React.Component<IUploadedFileProps, IState> {
   public static defaultProps: Partial<IUploadedFileProps>
-  constructor(props: any) {
-    super(props)
-    this.state = { deleted: false }
-  }
-
   // remove the file from storage repository
   public delete = () => {
     const ref = storage.ref(this.props.file.fullPath)
@@ -39,6 +33,10 @@ export class UploadedFile extends React.Component<IUploadedFileProps, IState> {
     ref.delete().catch((error) => {
       throw new Error(JSON.stringify(error))
     })
+  }
+  constructor(props: any) {
+    super(props)
+    this.state = { deleted: false }
   }
 
   public render() {
@@ -58,14 +56,9 @@ export class UploadedFile extends React.Component<IUploadedFileProps, IState> {
           // file display
           <div className="file-meta__container">
             <div className="file-meta__name">
-              <a
-                download
-                target="_blank"
-                href={file.downloadUrl}
-                rel="noreferrer"
-              >
+              <ExternalLink download href={file.downloadUrl}>
                 {file.name}
-              </a>
+              </ExternalLink>
             </div>
             <div className="file-meta__size">{formattedSize}</div>
             {showDelete ? (

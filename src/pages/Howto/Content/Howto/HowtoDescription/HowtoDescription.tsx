@@ -1,31 +1,40 @@
-import { PureComponent } from 'react'
-import TagDisplay from 'src/components/Tags/TagDisplay/TagDisplay'
 import { format } from 'date-fns'
+import { useState, useEffect } from 'react'
 import type { IHowtoDB } from 'src/models/howto.models'
-import Heading from 'src/components/Heading'
-import Text from 'src/components/Text'
-import ModerationStatusText from 'src/components/ModerationStatusText'
-import { Link } from 'src/components/Links'
-import { Box, Flex, Image } from 'theme-ui'
-import { FileInfo } from 'src/components/FileInfo/FileInfo'
+import { Heading, Text, Box, Flex, Image, AspectImage } from 'theme-ui'
 import StepsIcon from 'src/assets/icons/icon-steps.svg'
 import TimeNeeded from 'src/assets/icons/icon-time-needed.svg'
 import DifficultyLevel from 'src/assets/icons/icon-difficulty-level.svg'
-import { Button } from 'oa-components'
-import type { IUser } from 'src/models/user.models'
 import {
-  isAllowToEditContent,
-  emStringToPx,
-  capitalizeFirstLetter,
-} from 'src/utils/helpers'
-import theme from 'src/themes/styled.theme'
-import ArrowIcon from 'src/assets/icons/icon-arrow-select.svg'
-import { FlagIconHowTos } from 'oa-components'
-import { VerifiedUserBadge } from 'src/components/VerifiedUserBadge/VerifiedUserBadge'
-import { UsefulStatsButton } from 'src/components/UsefulStatsButton/UsefulStatsButton'
+  Button,
+  ModerationStatus,
+  LinkifyText,
+  UsefulStatsButton,
+  CategoryTag,
+  FileInformation,
+  Username,
+  ViewsCounter,
+  DownloadFiles,
+} from 'oa-components'
+import type { IUser } from 'src/models/user.models'
+import { isAllowToEditContent, capitalizeFirstLetter } from 'src/utils/helpers'
+import { Link } from 'react-router-dom'
+import { useCommonStores } from 'src/index'
+import {
+  retrieveHowtoDownloadCooldown,
+  isHowtoDownloadCooldownExpired,
+  addHowtoDownloadCooldown,
+  updateHowtoDownloadCooldown,
+} from './downloadCooldown'
+import {
+  retrieveSessionStorageArray,
+  addIDToSessionStorageArray,
+} from 'src/utils/sessionStorage'
+import { AuthWrapper } from 'src/common/AuthWrapper'
+import { isUserVerified } from 'src/common/isUserVerified'
 
 interface IProps {
-  howto: IHowtoDB
+  howto: IHowtoDB & { taglist: any }
   loggedInUser: IUser | undefined
   needsModeration: boolean
   votedUsefulCount?: number
@@ -35,17 +44,51 @@ interface IProps {
   onUsefulClick: () => void
 }
 
-export default class HowtoDescription extends PureComponent<IProps> {
-  // eslint-disable-next-line
-  constructor(props: IProps) {
-    super(props)
+const HowtoDescription = ({ howto, loggedInUser, ...props }: IProps) => {
+  const [fileDownloadCount, setFileDownloadCount] = useState(
+    howto.total_downloads,
+  )
+  let didInit = false
+  const [viewCount, setViewCount] = useState<number | undefined>()
+  const { stores } = useCommonStores()
+
+  const incrementDownloadCount = async () => {
+    const updatedDownloadCount = await stores.howtoStore.incrementDownloadCount(
+      howto._id,
+    )
+    setFileDownloadCount(updatedDownloadCount!)
   }
 
-  private dateCreatedByText(howto: IHowtoDB): string {
-    return format(new Date(howto._created), 'DD-MM-YYYY')
+  const incrementViewCount = async () => {
+    const sessionStorageArray = retrieveSessionStorageArray('howto')
+
+    if (!sessionStorageArray.includes(howto._id)) {
+      const updatedViewCount = await stores.howtoStore.incrementViewCount(
+        howto._id,
+      )
+      setViewCount(updatedViewCount)
+      addIDToSessionStorageArray('howto', howto._id)
+    } else {
+      setViewCount(howto.total_views)
+    }
   }
 
-  private dateLastEditText(howto: IHowtoDB): string {
+  const handleClick = async () => {
+    const howtoDownloadCooldown = retrieveHowtoDownloadCooldown(howto._id)
+
+    if (
+      howtoDownloadCooldown &&
+      isHowtoDownloadCooldownExpired(howtoDownloadCooldown)
+    ) {
+      updateHowtoDownloadCooldown(howto._id)
+      incrementDownloadCount()
+    } else if (!howtoDownloadCooldown) {
+      addHowtoDownloadCooldown(howto._id)
+      incrementDownloadCount()
+    }
+  }
+
+  const dateLastEditText = (howto: IHowtoDB): string => {
     const lastModifiedDate = format(new Date(howto._modified), 'DD-MM-YYYY')
     const creationDate = format(new Date(howto._created), 'DD-MM-YYYY')
     if (lastModifiedDate !== creationDate) {
@@ -55,201 +98,230 @@ export default class HowtoDescription extends PureComponent<IProps> {
     }
   }
 
-  public render() {
-    const { howto, loggedInUser } = this.props
+  useEffect(() => {
+    if (!didInit) {
+      didInit = true
+      incrementViewCount()
+    }
+  }, [howto._id])
 
-    const iconFlexDirection =
-      emStringToPx(theme.breakpoints[0]) > window.innerWidth ? 'column' : 'row'
-    return (
+  return (
+    <Flex
+      data-cy="how-to-basis"
+      data-id={howto._id}
+      className="howto-description-container"
+      sx={{
+        borderRadius: 2,
+        bg: 'white',
+        borderColor: 'black',
+        borderStyle: 'solid',
+        borderWidth: '2px',
+        overflow: 'hidden',
+        flexDirection: ['column-reverse', 'column-reverse', 'row'],
+        mt: 4,
+      }}
+    >
       <Flex
-        data-cy="how-to-basis"
-        data-id={howto._id}
-        className="howto-description-container"
+        px={4}
+        py={4}
         sx={{
-          borderRadius: theme.radii[2] + 'px',
-          bg: 'white',
-          borderColor: theme.colors.black,
-          borderStyle: 'solid',
-          borderWidth: '2px',
-          overflow: 'hidden',
-          flexDirection: ['column-reverse', 'column-reverse', 'row'],
-          mt: 4,
+          flexDirection: 'column',
+          width: ['100%', '100%', `${(1 / 2) * 100}%`],
         }}
       >
-        <Flex
-          px={4}
-          py={4}
-          sx={{
-            flexDirection: 'column',
-            width: ['100%', '100%', `${(1 / 2) * 100}%`],
-          }}
-        >
-          <Flex sx={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <Link to={'/how-to/'}>
+        <Flex sx={{ flexWrap: 'wrap', gap: '10px' }}>
+          <Link to={'/how-to/'}>
+            <Button
+              variant="subtle"
+              sx={{ fontSize: '14px' }}
+              data-cy="go-back"
+              icon="arrow-back"
+            >
+              Back
+            </Button>
+          </Link>
+          {props.votedUsefulCount !== undefined && (
+            <Box>
+              <UsefulStatsButton
+                votedUsefulCount={props.votedUsefulCount}
+                hasUserVotedUseful={props.hasUserVotedUseful}
+                isLoggedIn={loggedInUser ? true : false}
+                onUsefulClick={props.onUsefulClick}
+              />
+            </Box>
+          )}
+          {viewCount ? (
+            <AuthWrapper roleRequired="beta-tester">
+              <Box>
+                <ViewsCounter viewsCount={viewCount!} />
+              </Box>
+            </AuthWrapper>
+          ) : null}
+          {/* Check if pin should be moderated */}
+          {props.needsModeration && (
+            <Flex sx={{ justifyContent: 'space-between' }}>
               <Button
-                variant="subtle"
-                sx={{ fontSize: '14px' }}
-                data-cy="go-back"
-              >
-                <Flex>
-                  <Image
-                    sx={{
-                      width: '10px',
-                      marginRight: '4px',
-                      transform: 'rotate(90deg)',
-                    }}
-                    src={ArrowIcon}
-                  />
-                  <Text>Back</Text>
-                </Flex>
+                data-cy={'accept'}
+                variant={'primary'}
+                icon="check"
+                mr={1}
+                onClick={() => props.moderateHowto(true)}
+              />
+              <Button
+                data-cy="reject-howto"
+                variant={'outline'}
+                icon="delete"
+                onClick={() => props.moderateHowto(false)}
+              />
+            </Flex>
+          )}
+          {/* Check if logged in user is the creator of the how-to OR a super-admin */}
+          {loggedInUser && isAllowToEditContent(howto, loggedInUser) && (
+            <Link to={'/how-to/' + howto.slug + '/edit'}>
+              <Button variant={'primary'} data-cy={'edit'}>
+                Edit
               </Button>
             </Link>
-            {this.props.votedUsefulCount !== undefined && (
-              <Box style={{ flexGrow: 1 }}>
-                <UsefulStatsButton
-                  votedUsefulCount={this.props.votedUsefulCount}
-                  hasUserVotedUseful={this.props.hasUserVotedUseful}
-                  isLoggedIn={this.props.loggedInUser ? true : false}
-                  onUsefulClick={this.props.onUsefulClick}
-                />
-              </Box>
-            )}
-            {/* Check if pin should be moderated */}
-            {this.props.needsModeration && (
-              <Flex sx={{ justifyContent: 'space-between' }}>
-                <Button
-                  data-cy={'accept'}
-                  variant={'primary'}
-                  icon="check"
-                  mr={1}
-                  onClick={() => this.props.moderateHowto(true)}
-                />
-                <Button
-                  data-cy="reject-howto"
-                  variant={'tertiary'}
-                  icon="delete"
-                  onClick={() => this.props.moderateHowto(false)}
-                />
-              </Flex>
-            )}
-            {/* Check if logged in user is the creator of the how-to OR a super-admin */}
-            {loggedInUser && isAllowToEditContent(howto, loggedInUser) && (
-              <Link to={'/how-to/' + this.props.howto.slug + '/edit'}>
-                <Button variant={'primary'} data-cy={'edit'}>
-                  Edit
-                </Button>
-              </Link>
-            )}
-          </Flex>
-          <Box mt={3} mb={2}>
-            <Flex sx={{ alignItems: 'center' }}>
-              {howto.creatorCountry && (
-                <FlagIconHowTos code={howto.creatorCountry} />
-              )}
-              <Text inline auxiliary my={2} ml={1}>
-                By{' '}
-                <Link
-                  sx={{
-                    textDecoration: 'underline',
-                    color: 'inherit',
-                  }}
-                  to={'/u/' + howto._createdBy}
-                >
-                  {howto._createdBy}
-                </Link>{' '}
-                <VerifiedUserBadge
-                  userId={howto._createdBy}
-                  height="12px"
-                  width="12px"
-                />
-                | Published on {this.dateCreatedByText(howto)}
-              </Text>
-            </Flex>
-            <Text
-              auxiliary
-              sx={{ color: `${theme.colors.lightgrey} !important` }}
-              mt={1}
-              mb={2}
-            >
-              {this.dateLastEditText(howto)}
-            </Text>
-            <Heading medium mt={2} mb={1}>
-              {/* HACK 2021-07-16 - new howtos auto capitalize title but not older */}
-              {capitalizeFirstLetter(howto.title)}
-            </Heading>
-            <Text preLine paragraph>
-              {howto.description}
-            </Text>
-          </Box>
-
-          <Flex mt="4">
-            <Flex mr="4" sx={{ flexDirection: iconFlexDirection }}>
-              <Image src={StepsIcon} height="16" width="23" mr="2" mb="2" />
-              {howto.steps.length} steps
-            </Flex>
-            <Flex mr="4" sx={{ flexDirection: iconFlexDirection }}>
-              <Image src={TimeNeeded} height="16" width="16" mr="2" mb="2" />
-              {howto.time}
-            </Flex>
-            <Flex mr="4" sx={{ flexDirection: iconFlexDirection }}>
-              <Image
-                src={DifficultyLevel}
-                height="15"
-                width="16"
-                mr="2"
-                mb="2"
-              />
-              {howto.difficulty_level}
-            </Flex>
-          </Flex>
-          <Flex mt={4}>
-            {howto.tags &&
-              Object.keys(howto.tags).map((tag) => {
-                return <TagDisplay key={tag} tagKey={tag} />
-              })}
-          </Flex>
-          {howto.files && howto.files.length > 0 && (
-            <Flex
-              className="file-container"
-              mt={3}
-              sx={{ flexDirection: 'column' }}
-            >
-              {howto.files.map((file, index) => (
-                <FileInfo
-                  allowDownload
-                  file={file}
-                  key={file ? file.name : `file-${index}`}
-                />
-              ))}
-            </Flex>
           )}
         </Flex>
-        <Flex
-          sx={{
-            width: ['100%', '100%', `${(1 / 2) * 100}%`],
-            position: 'relative',
-            justifyContent: 'end',
-          }}
-        >
-          <Image
-            sx={{
-              objectFit: 'cover',
-              width: 'auto',
-              height: '100%',
+        <Box mt={4} mb={2}>
+          <Username
+            user={{
+              userName: howto._createdBy,
+              countryCode: howto.creatorCountry,
             }}
-            src={howto.cover_image.downloadUrl}
-            crossOrigin=""
-            alt="how-to cover"
+            isVerified={isUserVerified(howto._createdBy)}
           />
-          {howto.moderation !== 'accepted' && (
-            <ModerationStatusText
-              moderatedContent={howto}
-              contentType="howto"
-              top={'0px'}
+          <Text
+            variant="auxiliary"
+            sx={{
+              color: 'lightgrey',
+              '&!important': {
+                color: 'lightgrey',
+              },
+            }}
+            mt={1}
+            mb={2}
+          >
+            {dateLastEditText(howto)}
+          </Text>
+          <Heading mt={2} mb={1}>
+            {/* HACK 2021-07-16 - new howtos auto capitalize title but not older */}
+            {capitalizeFirstLetter(howto.title)}
+          </Heading>
+          <Text variant="paragraph" sx={{ whiteSpace: 'pre-line' }}>
+            <LinkifyText>{howto.description}</LinkifyText>
+          </Text>
+        </Box>
+
+        <Flex mt="4">
+          <Flex mr="4" sx={{ flexDirection: ['column', 'row', 'row'] }}>
+            <Image
+              loading="lazy"
+              src={StepsIcon}
+              height="16"
+              width="23"
+              mr="2"
+              mb="2"
             />
-          )}
+            {howto.steps.length === 1
+              ? `${howto.steps.length} step`
+              : `${howto.steps.length} steps`}
+          </Flex>
+          <Flex mr="4" sx={{ flexDirection: ['column', 'row', 'row'] }}>
+            <Image
+              loading="lazy"
+              src={TimeNeeded}
+              height="16"
+              width="16"
+              mr="2"
+              mb="2"
+            />
+            {howto.time}
+          </Flex>
+          <Flex mr="4" sx={{ flexDirection: ['column', 'row', 'row'] }}>
+            <Image
+              loading="lazy"
+              src={DifficultyLevel}
+              height="15"
+              width="16"
+              mr="2"
+              mb="2"
+            />
+            {howto.difficulty_level}
+          </Flex>
         </Flex>
+        <Flex mt={4}>
+          {howto.taglist &&
+            howto.taglist.map((tag, idx) => (
+              <CategoryTag key={idx} tag={tag} sx={{ mr: 1 }} />
+            ))}
+        </Flex>
+        {((howto.files && howto.files.length > 0) || howto.fileLink) && (
+          <Flex
+            className="file-container"
+            mt={3}
+            sx={{ flexDirection: 'column' }}
+          >
+            {howto.fileLink && (
+              <DownloadFiles handleClick={handleClick} link={howto.fileLink} />
+            )}
+            {howto.files
+              .filter(Boolean)
+              .map(
+                (file, index) =>
+                  file && (
+                    <FileInformation
+                      allowDownload
+                      file={file}
+                      key={file ? file.name : `file-${index}`}
+                      handleClick={handleClick}
+                    />
+                  ),
+              )}
+            {typeof fileDownloadCount === 'number' && (
+              <Text
+                data-cy="file-download-counter"
+                sx={{
+                  fontSize: 1,
+                  color: 'grey',
+                  paddingLeft: 1,
+                }}
+              >
+                {fileDownloadCount}
+                {fileDownloadCount !== 1 ? ' downloads' : ' download'}
+              </Text>
+            )}
+          </Flex>
+        )}
       </Flex>
-    )
-  }
+      <Box
+        sx={{
+          width: ['100%', '100%', `${(1 / 2) * 100}%`],
+          position: 'relative',
+        }}
+      >
+        <AspectImage
+          loading="lazy"
+          ratio={12 / 9}
+          sx={{
+            objectFit: 'cover',
+            width: '100%',
+          }}
+          src={howto.cover_image.downloadUrl}
+          crossOrigin=""
+          alt="how-to cover"
+        />
+        {howto.moderation !== 'accepted' && (
+          <ModerationStatus
+            status={howto.moderation}
+            contentType="howto"
+            sx={{ top: 0, position: 'absolute', right: 0 }}
+          />
+        )}
+      </Box>
+    </Flex>
+  )
 }
+
+export default HowtoDescription

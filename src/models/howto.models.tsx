@@ -1,22 +1,9 @@
 import type { ISelectedTags } from './tags.model'
-import type { DBDoc, IModerable } from './common.models'
+import type { DBDoc, IModerable, UserMention } from './common.models'
 import type { IConvertedFileMeta } from '../types'
 import type { IUploadedFileMeta } from '../stores/storage'
 import type { ICategory } from './categories.model'
-
-/**
- * Comments are currently only used in Howtos.
- */
-export interface IComment {
-  _id: string
-  _created: string
-  _edited?: string
-  _creatorId: string
-  creatorName: string
-  creatorCountry?: string | null
-  text: string
-  userIsVerfied?: boolean
-}
+import type { IComment } from './'
 
 // By default all how-to form input fields come as strings
 // The IHowto interface can imposes the correct formats on fields
@@ -24,10 +11,15 @@ export interface IComment {
 export interface IHowto extends IHowtoFormInput, IModerable {
   _createdBy: string
   cover_image: IUploadedFileMeta
+  fileLink?: string
   files: Array<IUploadedFileMeta | File | null>
   steps: IHowtoStep[]
   // Comments were added in V2, old howto's may not have the property
   comments?: IComment[]
+  total_downloads?: number
+  total_views?: number
+  mentions: UserMention[]
+  previousSlugs?: string[]
 }
 
 /**
@@ -58,6 +50,7 @@ export interface IHowtoFormInput extends IModerable {
   description: string
   difficulty_level: 'Easy' | 'Medium' | 'Hard' | 'Very Hard'
   time: string
+  fileLink?: string
   files: Array<IUploadedFileMeta | File | null>
   steps: IHowToStepFormInput[]
   slug: string

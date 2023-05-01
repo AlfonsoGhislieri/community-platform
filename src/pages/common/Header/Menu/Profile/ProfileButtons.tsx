@@ -1,5 +1,7 @@
 import { Component } from 'react'
-import theme from 'src/themes/styled.theme'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
 import styled from '@emotion/styled'
 import { Box, Flex } from 'theme-ui'
 import ProfileButtonItem from './ProfileButtonItem'
@@ -45,7 +47,7 @@ export class ProfileButtons extends Component<IProps> {
               <ProfileButtonItem
                 link={'/sign-up'}
                 text="Join"
-                variant="colorful"
+                variant="outline"
                 isMobile={true}
                 sx={{
                   fontSize: '12px',
@@ -65,14 +67,14 @@ export class ProfileButtons extends Component<IProps> {
               sx={{
                 fontWeight: 'bold',
                 marginRight: '10px',
-                fontSize: theme.fontSizes[2],
+                fontSize: 2,
               }}
             />
             <ProfileButtonItem
               link={'/sign-up'}
               text="Join"
-              variant="colorful"
-              sx={{ fontSize: theme.fontSizes[2] }}
+              variant="outline"
+              sx={{ fontSize: 2 }}
             />
           </>
         )}

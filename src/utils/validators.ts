@@ -3,13 +3,20 @@ import isUrl from 'is-url'
  *            General Validation Methods
  * **************************************************************************/
 
-const required = (value: any) => (value ? undefined : 'Required')
+const required = (value: any) =>
+  value ? undefined : 'Make sure this field is filled correctly'
 
 const validateUrl = (value: any) => {
   if (value) {
     return isUrl(value) ? undefined : 'Invalid url'
   }
   return 'Required'
+}
+
+const validateUrlAcceptEmpty = (value: any) => {
+  if (value) {
+    return isUrl(value) ? undefined : 'Invalid url'
+  }
 }
 
 const validateEmail = (value: string) => {
@@ -43,6 +50,7 @@ const ensureExternalUrl = (url: string) =>
 
 export {
   validateUrl,
+  validateUrlAcceptEmpty,
   validateEmail,
   required,
   addProtocolMutator,

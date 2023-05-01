@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { Field, Form } from 'react-final-form'
-import { Button } from 'oa-components'
-import { InputField } from 'src/components/Form/Fields'
+import { Button, FieldInput } from 'oa-components'
 import type { UserStore } from 'src/stores/User/user.store'
-import Text from 'src/components/Text'
-import theme from 'src/themes/styled.theme'
+import { Text, Flex } from 'theme-ui'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
 import styled from '@emotion/styled'
-import Flex from 'src/components/Flex'
 
 interface IFormValues {
   password?: string
@@ -64,6 +64,7 @@ export class ChangeEmailForm extends React.Component<IProps, IState> {
       <>
         <Button
           my={3}
+          mr={2}
           variant={'secondary'}
           onClick={() =>
             this.setState({
@@ -93,7 +94,7 @@ export class ChangeEmailForm extends React.Component<IProps, IState> {
                     <Label htmlFor="newEmail">New email address :</Label>
                     <Field
                       name="newEmail"
-                      component={InputField}
+                      component={FieldInput}
                       placeholder="New email address"
                       type="email"
                       autocomplete="off"
@@ -104,7 +105,7 @@ export class ChangeEmailForm extends React.Component<IProps, IState> {
                     <Label htmlFor="oldPassword">Password :</Label>
                     <Field
                       name="password"
-                      component={InputField}
+                      component={FieldInput}
                       placeholder="password"
                       type="password"
                       autocomplete="off"

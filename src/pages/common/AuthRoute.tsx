@@ -3,9 +3,8 @@ import type { RouteProps } from 'react-router'
 import { Redirect, Route } from 'react-router'
 import { observer } from 'mobx-react'
 import type { UserRole } from 'src/models/user.models'
-import Text from 'src/components/Text'
-import Flex from 'src/components/Flex'
-import { AuthWrapper } from 'src/components/Auth/AuthWrapper'
+import { Flex, Text } from 'theme-ui'
+import { AuthWrapper } from 'src/common/AuthWrapper'
 
 /*
     This provides a <AuthRoute /> component that can be used in place of <Route /> components
@@ -45,7 +44,7 @@ export class AuthRoute extends React.Component<IProps, IState> {
               mt="40px"
               data-cy="auth-route-deny"
             >
-              <Text regular>
+              <Text>
                 {roleRequired
                   ? `${roleRequired} role required to access this page`
                   : 'Please login to access this page'}

@@ -1,27 +1,28 @@
+import { motion } from 'framer-motion'
+import { inject, observer } from 'mobx-react'
 import { Component } from 'react'
-import { Flex } from 'theme-ui'
-import styled from '@emotion/styled'
-import Profile from 'src/pages/common/Header/Menu/Profile/Profile'
-import NotificationsIcon from 'src/pages/common/Header/Menu/Notifications/NotificationsIcon'
-import NotificationsDesktop from 'src/pages/common/Header/Menu/Notifications/NotificationsDesktop'
-import NotificationsMobile from 'src/pages/common/Header/Menu/Notifications/NotificationsMobile'
+import HamburgerMenu from 'react-hamburger-menu'
+import { isModuleSupported, MODULE } from 'src/modules'
+import Logo from 'src/pages/common/Header/Menu/Logo/Logo'
 import MenuDesktop from 'src/pages/common/Header/Menu/MenuDesktop'
 import MenuMobilePanel from 'src/pages/common/Header/Menu/MenuMobile/MenuMobilePanel'
-import { motion } from 'framer-motion'
-import Logo from 'src/pages/common/Header/Menu/Logo/Logo'
-import theme from 'src/themes/styled.theme'
-import HamburgerMenu from 'react-hamburger-menu'
-import { observer, inject } from 'mobx-react'
+import { NotificationsDesktop } from 'src/pages/common/Header/Menu/Notifications/NotificationsDesktop'
+import { NotificationsIcon } from 'src/pages/common/Header/Menu/Notifications/NotificationsIcon'
+import { NotificationsMobile } from 'src/pages/common/Header/Menu/Notifications/NotificationsMobile'
+import Profile from 'src/pages/common/Header/Menu/Profile/Profile'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
+import { Flex } from 'theme-ui'
+
+import styled from '@emotion/styled'
+
 import type { MobileMenuStore } from 'src/stores/MobileMenu/mobilemenu.store'
-import type { UserStore } from 'src/stores/User/user.store'
-import { isModuleSupported, MODULE } from 'src/modules'
-import { AuthWrapper } from 'src/components/Auth/AuthWrapper'
-
-interface IProps {}
-
-interface IInjectedProps extends IProps {
+import type { UserNotificationsStore } from 'src/stores/User/notifications.store'
+import { getFormattedNotifications } from './getFormattedNotifications'
+interface IInjectedProps {
   mobileMenuStore: MobileMenuStore
-  userStore: UserStore
+  userNotificationsStore: UserNotificationsStore
 }
 
 const MobileNotificationsWrapper = styled(Flex)`
@@ -86,9 +87,9 @@ const AnimationContainer = (props: any) => {
 }
 
 @inject('mobileMenuStore')
-@inject('userStore')
+@inject('userNotificationsStore')
 @observer
-export class Header extends Component<IProps> {
+export class Header extends Component {
   // eslint-disable-next-line
   constructor(props: any) {
     super(props)
@@ -100,14 +101,12 @@ export class Header extends Component<IProps> {
 
   render() {
     const menu = this.injected.mobileMenuStore
-    const user = this.injected.userStore.user
-    const areThereNotifications = Boolean(
-      user?.notifications?.length &&
-        !(
-          user?.notifications?.filter((notification) => !notification.read)
-            .length === 0
-        ),
+    const user = this.injected.userNotificationsStore.user
+    const notifications = getFormattedNotifications(
+      this.injected.userNotificationsStore.getUnreadNotifications(),
     )
+    const areThereNotifications = Boolean(notifications.length)
+    const isLoggedInUser = !!user
 
     return (
       <>
@@ -127,30 +126,31 @@ export class Header extends Component<IProps> {
           <Flex>
             <Logo isMobile={true} />
           </Flex>
-          {user ? (
-            <AuthWrapper roleRequired="beta-tester">
-              <MobileNotificationsWrapper>
-                <NotificationsIcon
-                  onCLick={() => menu.toggleMobileNotifications()}
-                  isMobileMenuActive={menu.showMobileNotifications}
-                  areThereNotifications={areThereNotifications}
-                />
-              </MobileNotificationsWrapper>
-            </AuthWrapper>
-          ) : (
-            ''
+          {isLoggedInUser && (
+            <MobileNotificationsWrapper>
+              <NotificationsIcon
+                onCLick={() => menu.toggleMobileNotifications()}
+                isMobileMenuActive={menu.showMobileNotifications}
+                areThereNotifications={areThereNotifications}
+              />
+            </MobileNotificationsWrapper>
           )}
           <DesktopMenuWrapper className="menu-desktop" px={2}>
             <MenuDesktop />
-
-            {isModuleSupported(MODULE.USER) ? (
+            {isLoggedInUser && (
               <>
-                <AuthWrapper roleRequired="beta-tester">
-                  <NotificationsDesktop />
-                </AuthWrapper>
-                <Profile isMobile={false} />
+                <NotificationsDesktop
+                  notifications={notifications}
+                  markAllRead={() =>
+                    this.injected.userNotificationsStore.markAllNotificationsRead()
+                  }
+                  markAllNotified={() =>
+                    this.injected.userNotificationsStore.markAllNotificationsNotified()
+                  }
+                />
               </>
-            ) : null}
+            )}
+            {isModuleSupported(MODULE.USER) && <Profile isMobile={false} />}
           </DesktopMenuWrapper>
           <MobileMenuWrapper className="menu-mobile">
             <Flex pl={5}>
@@ -178,7 +178,15 @@ export class Header extends Component<IProps> {
         {menu.showMobileNotifications && (
           <AnimationContainer key={'mobileNotificationsContainer'}>
             <MobileMenuWrapper>
-              <NotificationsMobile />
+              <NotificationsMobile
+                notifications={notifications}
+                markAllRead={() =>
+                  this.injected.userNotificationsStore.markAllNotificationsRead()
+                }
+                markAllNotified={() =>
+                  this.injected.userNotificationsStore.markAllNotificationsNotified()
+                }
+              />
             </MobileMenuWrapper>
           </AnimationContainer>
         )}

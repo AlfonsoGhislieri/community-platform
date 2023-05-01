@@ -1,46 +1,36 @@
+import { CommentList, CreateComment } from 'oa-components'
 import { useState } from 'react'
-import ReactGA from 'react-ga4'
-import { Box, Flex } from 'theme-ui'
+import { MAX_COMMENT_LENGTH } from 'src/constants'
 import { useCommonStores } from 'src/index'
-import { Button } from 'oa-components'
-import { CommentTextArea } from 'src/components/Comment/CommentTextArea'
-import type { IComment } from 'src/models'
-import styled from '@emotion/styled'
 import { logger } from 'src/logger'
-import { CommentList } from 'src/components/CommentList/CommentList'
+import { Box, Flex } from 'theme-ui'
 
+import type { UserComment } from 'src/models'
+import { trackEvent } from 'src/common/Analytics'
 interface IProps {
-  comments?: IComment[]
+  comments: UserComment[]
 }
-
-const BoxStyled = styled(Box)`
-  position: relative;
-  border-radius: 5px;
-`
 
 // TODO: Expect the comments as a prop from the HowTo
 export const HowToComments = ({ comments }: IProps) => {
   const [comment, setComment] = useState('')
-  const [loading, setLoading] = useState(false)
   const { stores } = useCommonStores()
 
-  async function onSubmit(comment: string) {
+  const onSubmit = async (comment: string) => {
     try {
       const howto = stores.howtoStore.activeHowto
-      setLoading(true)
       await stores.howtoStore.addComment(comment)
       if (howto) {
-        await stores.userStore.triggerNotification(
+        await stores.userNotificationsStore.triggerNotification(
           'new_comment',
           howto._createdBy,
           '/how-to/' + howto.slug,
         )
       }
 
-      setLoading(false)
       setComment('')
 
-      ReactGA.event({
+      trackEvent({
         category: 'Comments',
         action: 'Submitted',
         label: stores.howtoStore.activeHowto?.title,
@@ -59,38 +49,33 @@ export const HowToComments = ({ comments }: IProps) => {
     }
   }
 
-  async function handleEditRequest() {
-    ReactGA.event({
+  const handleEditRequest = async () => {
+    trackEvent({
       category: 'Comments',
       action: 'Edit existing comment',
       label: stores.howtoStore.activeHowto?.title,
     })
   }
 
-  async function handleDelete(_id: string) {
-    const confirmation = window.confirm(
-      'Are you sure you want to delete this comment?',
-    )
-    if (confirmation) {
-      await stores.howtoStore.deleteComment(_id)
-      ReactGA.event({
+  const handleDelete = async (_id: string) => {
+    await stores.howtoStore.deleteComment(_id)
+    trackEvent({
+      category: 'Comments',
+      action: 'Deleted',
+      label: stores.howtoStore.activeHowto?.title,
+    })
+    logger.debug(
+      {
         category: 'Comments',
         action: 'Deleted',
         label: stores.howtoStore.activeHowto?.title,
-      })
-      logger.debug(
-        {
-          category: 'Comments',
-          action: 'Deleted',
-          label: stores.howtoStore.activeHowto?.title,
-        },
-        'comment deleted',
-      )
-    }
+      },
+      'comment deleted',
+    )
   }
 
-  async function handleEdit(_id: string, comment: string) {
-    ReactGA.event({
+  const handleEdit = async (_id: string, comment: string) => {
+    trackEvent({
       category: 'Comments',
       action: 'Update',
       label: stores.howtoStore.activeHowto?.title,
@@ -108,7 +93,6 @@ export const HowToComments = ({ comments }: IProps) => {
 
   return (
     <Flex
-      ml={[0, 0, 6]}
       mt={5}
       sx={{ flexDirection: 'column', alignItems: 'center' }}
       data-cy="howto-comments"
@@ -116,11 +100,7 @@ export const HowToComments = ({ comments }: IProps) => {
       <Flex
         mb={4}
         sx={{
-          width: [
-            `${(4 / 5) * 100}%`,
-            `${(4 / 5) * 100}%`,
-            `${(2 / 3) * 100}%`,
-          ],
+          width: [`100%`, `${(4 / 5) * 100}%`, `${(2 / 3) * 100}%`],
           flexDirection: 'column',
           alignItems: 'center',
         }}
@@ -131,28 +111,26 @@ export const HowToComments = ({ comments }: IProps) => {
           handleEdit={handleEdit}
           handleEditRequest={handleEditRequest}
           handleDelete={handleDelete}
+          highlightedCommentId={window.location.hash.replace('#comment:', '')}
+          trackEvent={trackEvent}
         />
       </Flex>
-      <BoxStyled sx={{ width: `${(2 / 3) * 100}%` }}>
-        <CommentTextArea
-          data-cy="comment-text-area"
+      <Box
+        sx={{
+          width: ['100%', `${(4 / 5) * 100}%`, `${(2 / 3) * 100}%`],
+        }}
+      >
+        <CreateComment
+          maxLength={MAX_COMMENT_LENGTH}
           comment={comment}
           onChange={setComment}
-          loading={loading}
-        />
-        <Button
-          data-cy="comment-submit"
-          disabled={!Boolean(comment.trim()) || loading}
-          variant="primary"
-          onClick={() => onSubmit(comment)}
-          mt={3}
+          onSubmit={onSubmit}
+          isLoggedIn={!!stores.userStore.activeUser}
           sx={{
-            float: 'right',
+            marginLeft: [0, 2 * -1],
           }}
-        >
-          Comment
-        </Button>
-      </BoxStyled>
+        />
+      </Box>
     </Flex>
   )
 }

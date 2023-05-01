@@ -3,16 +3,17 @@ import { observer } from 'mobx-react'
 import * as React from 'react'
 import type { RouteComponentProps } from 'react-router'
 import { Redirect } from 'react-router'
-import { Loader } from 'src/components/Loader'
-import Text from 'src/components/Text'
+import { Loader } from 'oa-components'
+import { Text } from 'theme-ui'
 import type { IResearch } from 'src/models/research.models'
 import type { IUser } from 'src/models/user.models'
 import ResearchForm from 'src/pages/Research/Content/Common/Research.form'
 import { useResearchStore } from 'src/stores/Research/research.store'
 import { isAllowToEditContent } from 'src/utils/helpers'
+import { logger } from '../../../../logger'
 
 interface IState {
-  formValues: IResearch.ItemDB
+  formValues?: IResearch.ItemDB
   formSaved: boolean
   isLoading: boolean
   _toDocsList: boolean
@@ -24,7 +25,7 @@ type IProps = RouteComponentProps<any>
 const EditResearch = observer((props: IProps) => {
   const store = useResearchStore()
   const [state, setState] = React.useState<IState>({
-    formValues: {} as IResearch.ItemDB,
+    formValues: store.activeResearchItem,
     formSaved: false,
     _toDocsList: false,
     isLoading: !store.activeResearchItem,
@@ -68,16 +69,22 @@ const EditResearch = observer((props: IProps) => {
   if (formValues && !isLoading) {
     if (loggedInUser && isAllowToEditContent(formValues, loggedInUser)) {
       return (
-        <ResearchForm formValues={formValues} parentType="edit" {...props} />
+        <ResearchForm
+          data-testid="EditResearch"
+          formValues={formValues}
+          parentType="edit"
+          {...props}
+        />
       )
     } else {
+      logger.debug(`Redirect:`, '/research/' + formValues.slug)
       return <Redirect to={'/research/' + formValues.slug} />
     }
   } else {
     return isLoading ? (
       <Loader />
     ) : (
-      <Text txtcenter mt="50px" sx={{ width: '100%' }}>
+      <Text mt="50px" sx={{ width: '100%', textAlign: 'center' }}>
         Research not found
       </Text>
     )

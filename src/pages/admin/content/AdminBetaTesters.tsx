@@ -1,13 +1,9 @@
 import * as React from 'react'
 import { inject, observer } from 'mobx-react'
 import { Button } from 'oa-components'
-import Heading from 'src/components/Heading'
+import { Heading, Box, Text, Input, Flex } from 'theme-ui'
 import type { AdminStore } from 'src/stores/Admin/admin.store'
-import { Box } from 'theme-ui'
-import { Input } from 'src/components/Form/elements'
-import Text from 'src/components/Text'
-import Flex from 'src/components/Flex'
-import { AuthWrapper } from 'src/components/Auth/AuthWrapper'
+import { AuthWrapper } from 'src/common/AuthWrapper'
 
 // we include props from react-final-form fields so it can be used as a custom field component
 interface IProps {
@@ -22,17 +18,11 @@ interface IState {
 @inject('adminStore')
 @observer
 export class AdminBetaTesters extends React.Component<IProps, IState> {
-  constructor(props: IProps) {
-    super(props)
-    this.state = { userInput: '' }
-  }
-
   handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({
       userInput: e.target.value,
     })
   }
-
   addBetaTester = async () => {
     const username = this.state.userInput as string
     this.setState({ errorMsg: undefined, updating: true })
@@ -43,7 +33,6 @@ export class AdminBetaTesters extends React.Component<IProps, IState> {
       this.setState({ errorMsg: error.message })
     }
   }
-
   removeBetaTester = async (username: string) => {
     this.setState({ errorMsg: undefined, updating: true })
     try {
@@ -52,6 +41,10 @@ export class AdminBetaTesters extends React.Component<IProps, IState> {
     } catch (error) {
       this.setState({ errorMsg: error.message })
     }
+  }
+  constructor(props: IProps) {
+    super(props)
+    this.state = { userInput: '' }
   }
 
   public render() {

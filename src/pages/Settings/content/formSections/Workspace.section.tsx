@@ -1,27 +1,56 @@
 import * as React from 'react'
 
-import Flex from 'src/components/Flex'
-import Heading from 'src/components/Heading'
-import Text from 'src/components/Text'
-import { Box } from 'theme-ui'
-import { FlexSectionContainer, ArrowIsSectionOpen } from './elements'
-import { WORKSPACE_TYPES } from 'src/mocks/user_pp.mock'
+import { Flex, Heading, Box, Text } from 'theme-ui'
+import { FlexSectionContainer } from './elements'
 import { CustomRadioField } from './Fields/CustomRadio.field'
 import { required } from 'src/utils/validators'
-import theme from 'src/themes/styled.theme'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
 import { Field } from 'react-final-form'
+import type { IWorkspaceType } from 'src/models'
 
-interface IState {
-  isOpen?: boolean
-}
+import Extrusion from 'src/assets/images/workspace-focus/extrusion.png'
+import Injection from 'src/assets/images/workspace-focus/injection.png'
+import Mix from 'src/assets/images/workspace-focus/mix.png'
+import Sheetpress from 'src/assets/images/workspace-focus/sheetpress.png'
+import Shredder from 'src/assets/images/workspace-focus/shredder.png'
 
-export class WorkspaceSection extends React.Component<any, IState> {
-  state = {
-    isOpen: true,
-  }
+const WORKSPACE_TYPES: IWorkspaceType[] = [
+  {
+    label: 'shredder',
+    textLabel: 'Shredder',
+    subText: 'Shredding plastic waste into flakes',
+    imageSrc: Shredder,
+  },
+  {
+    label: 'sheetpress',
+    textLabel: 'Sheetpress',
+    subText: 'Making recycled plastic sheets',
+    imageSrc: Sheetpress,
+  },
+  {
+    label: 'extrusion',
+    textLabel: 'Extrusion',
+    subText: 'Extruding plastic into beams or products',
+    imageSrc: Extrusion,
+  },
+  {
+    label: 'injection',
+    textLabel: 'Injection',
+    subText: 'Making small productions of goods',
+    imageSrc: Injection,
+  },
+  {
+    label: 'mix',
+    textLabel: 'Mix',
+    subText: 'Running a workspace with multiple machines and goals',
+    imageSrc: Mix,
+  },
+]
 
+export class WorkspaceSection extends React.Component<any> {
   render() {
-    const { isOpen } = this.state
     return (
       <Field
         name="workspaceType"
@@ -30,16 +59,10 @@ export class WorkspaceSection extends React.Component<any, IState> {
         render={({ input, meta }) => (
           <FlexSectionContainer>
             <Flex sx={{ justifyContent: 'space-between' }}>
-              <Heading small>Workspace</Heading>
-              <ArrowIsSectionOpen
-                onClick={() => {
-                  this.setState({ isOpen: !isOpen })
-                }}
-                isOpen={isOpen}
-              />
+              <Heading variant="small">Workspace</Heading>
             </Flex>
-            <Box sx={{ display: isOpen ? 'block' : 'none' }}>
-              <Text regular my={4}>
+            <Box>
+              <Text mt={4} mb={4}>
                 What kind of Precious Plastic workspace do you run?
               </Text>
               <Flex sx={{ flexWrap: ['wrap', 'wrap', 'nowrap'] }}>
@@ -61,7 +84,14 @@ export class WorkspaceSection extends React.Component<any, IState> {
                 ))}
               </Flex>
               {meta.touched && meta.error && (
-                <Text color={theme.colors.red}>
+                <Text
+                  color={theme.colors.error}
+                  sx={{
+                    fontSize: 0.5,
+                    marginLeft: 1,
+                    marginRight: 1,
+                  }}
+                >
                   Please select your workspace type
                 </Text>
               )}

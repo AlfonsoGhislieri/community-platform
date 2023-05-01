@@ -6,10 +6,10 @@ import type { HowtoStore } from 'src/stores/Howto/howto.store'
 import { inject } from 'mobx-react'
 import { toJS } from 'mobx'
 import { HowtoForm } from 'src/pages/Howto/Content/Common/Howto.form'
-import Text from 'src/components/Text'
+import { Text } from 'theme-ui'
 import type { IUser } from 'src/models/user.models'
 import { isAllowToEditContent } from 'src/utils/helpers'
-import { Loader } from 'src/components/Loader'
+import { Loader } from 'oa-components'
 import { logger } from 'src/logger'
 
 interface IState {
@@ -40,7 +40,7 @@ class EditHowto extends React.Component<IProps, IState> {
   /* eslint-disable @typescript-eslint/naming-convention */
   public async UNSAFE_componentWillMount() {
     const loggedInUser = this.injected.howtoStore.activeUser
-    if (this.injected.howtoStore.activeHowto! !== undefined) {
+    if (this.injected.howtoStore.activeHowto) {
       this.setState({
         formValues: toJS(this.injected.howtoStore.activeHowto) as IHowtoDB,
         isLoading: false,
@@ -83,7 +83,7 @@ class EditHowto extends React.Component<IProps, IState> {
       return isLoading ? (
         <Loader />
       ) : (
-        <Text txtcenter mt="50px" sx={{ width: '100%' }}>
+        <Text mt="50px" sx={{ width: '100%', textAlign: 'center' }}>
           How-to not found
         </Text>
       )

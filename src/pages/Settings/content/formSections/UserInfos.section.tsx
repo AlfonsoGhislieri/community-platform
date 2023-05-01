@@ -1,34 +1,34 @@
 import * as React from 'react'
 import { Field } from 'react-final-form'
-import Heading from 'src/components/Heading'
-import Text from 'src/components/Text'
-import Flex from 'src/components/Flex'
-import { InputField, TextAreaField } from 'src/components/Form/Fields'
-import { Button } from 'oa-components'
-import theme from 'src/themes/styled.theme'
+import { Heading, Flex, Box, Text } from 'theme-ui'
+import { countries } from 'countries-list'
+import { Button, FieldInput, FieldTextarea } from 'oa-components'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
 import { FieldArray } from 'react-final-form-arrays'
-import { ProfileLinkField } from './Fields/Link.field'
-import { FlexSectionContainer, ArrowIsSectionOpen } from './elements'
-import { Box } from 'theme-ui'
+import { ProfileLinkField } from './Fields/ProfileLink.field'
+import { FlexSectionContainer } from './elements'
 import { required } from 'src/utils/validators'
-import type { IUserPP } from 'src/models/user_pp.models'
-import { ImageInputField } from 'src/components/Form/ImageInput.field'
-import { ErrorMessage } from 'src/components/Form/elements'
+import type { IUserPP } from 'src/models/userPreciousPlastic.models'
+import { ImageInputField } from 'src/common/Form/ImageInput.field'
 import type { IUser } from 'src/models'
 import type { IUploadedFileMeta } from 'src/stores/storage'
+import { ProfileType } from 'src/modules/profile/types'
+import { SelectField } from 'src/common/Form/Select.field'
 
 interface IProps {
   formValues: IUserPP
+  showLocationDropdown: boolean
   mutators: { [key: string]: (...args: any[]) => any }
 }
 interface IState {
   readOnly: boolean
   isSaving?: boolean
   showNotification?: boolean
-  isOpen?: boolean
 }
 
-const CoverImages = ({
+export const CoverImages = ({
   isMemberProfile,
   coverImages,
 }: {
@@ -37,13 +37,13 @@ const CoverImages = ({
 }) =>
   isMemberProfile ? (
     <>
-      <Text mb={2} mt={7} sx={{ width: '100%' }} medium>
+      <Text mb={2} mt={7} sx={{ width: '100%', fontSize: 2 }}>
         Add a profile image *
       </Text>
       <Box
         sx={{
-          height: '150px',
-          width: '150px',
+          height: '190px',
+          width: '190px',
         }}
         m="10px"
         data-cy="cover-image"
@@ -61,7 +61,7 @@ const CoverImages = ({
     </>
   ) : (
     <>
-      <Text mb={2} mt={7} sx={{ width: '100%' }} medium>
+      <Text mb={2} mt={7} sx={{ width: '100%', fontSize: 2 }}>
         Cover Image *
       </Text>
       <FieldArray
@@ -90,7 +90,11 @@ const CoverImages = ({
                   />
                 </Box>
               ))}
-              {meta.error && <ErrorMessage>{meta.error}</ErrorMessage>}
+              {meta.error && (
+                <Text sx={{ fontSize: 0, margin: 1, color: 'error' }}>
+                  {meta.error}
+                </Text>
+              )}
             </>
           )
         }}
@@ -102,11 +106,11 @@ const CoverImages = ({
         p={2}
         sx={{ width: '100%', borderRadius: '3px' }}
       >
-        <Text small>
+        <Text sx={{ fontSize: 1 }}>
           The cover images are shown in your profile and helps us evaluate your
           account.
         </Text>
-        <Text small>
+        <Text sx={{ fontSize: 1 }}>
           Make sure the first image shows your space. Best size is 1920x1080.
         </Text>
       </Box>
@@ -118,41 +122,59 @@ export class UserInfosSection extends React.Component<IProps, IState> {
     super(props)
     this.state = {
       readOnly: true,
-      isOpen: true,
     }
   }
 
   render() {
     const { formValues } = this.props
     const { profileType, links, coverImages } = formValues
-    const { isOpen } = this.state
-    const isMemberProfile = profileType === 'member'
+    const isMemberProfile = profileType === ProfileType.MEMBER
     return (
       <FlexSectionContainer>
         <Flex sx={{ justifyContent: 'space-between' }}>
-          <Heading small>Infos</Heading>
-          <ArrowIsSectionOpen
-            onClick={() => {
-              this.setState({ isOpen: !isOpen })
-            }}
-            isOpen={isOpen}
-          />
+          <Heading variant="small">Infos</Heading>
         </Flex>
-        <Box sx={{ display: isOpen ? 'block' : 'none' }}>
+        <Box>
           <Flex sx={{ flexWrap: 'wrap' }}>
-            <Text my={4} medium>
+            <Text
+              sx={{
+                fontSize: 2,
+                marginTop: 4,
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Display Name *
             </Text>
             <Field
               data-cy="username"
               name="displayName"
-              component={InputField}
+              component={FieldInput}
               placeholder="Pick a unique username"
               validate={required}
               validateFields={[]}
             />
+            {this.props.showLocationDropdown && (
+              <Flex sx={{ flexDirection: 'column', width: '100%' }}>
+                <Text my={4} sx={{ fontSize: 2 }}>
+                  Your location
+                </Text>
+                <Field data-cy="location-dropdown" name="country">
+                  {(field) => (
+                    <SelectField
+                      options={Object.keys(countries).map((country) => ({
+                        label: countries[country].name,
+                        value: country,
+                      }))}
+                      placeholder="Country"
+                      {...field}
+                    />
+                  )}
+                </Field>
+              </Flex>
+            )}
 
-            <Text mb={2} mt={7} medium>
+            <Text mb={2} mt={7} sx={{ fontSize: 2 }}>
               {isMemberProfile
                 ? 'Tell us a bit about yourself *'
                 : 'Description *'}
@@ -160,7 +182,7 @@ export class UserInfosSection extends React.Component<IProps, IState> {
             <Field
               data-cy="info-description"
               name="about"
-              component={TextAreaField}
+              component={FieldTextarea}
               placeholder="Describe in details what you do and who you are. Write in English otherwise your profile won't be approved."
               validate={required}
               validateFields={[]}
@@ -170,25 +192,28 @@ export class UserInfosSection extends React.Component<IProps, IState> {
               coverImages={coverImages}
             />
           </Flex>
-          <>
+          <Box data-cy="UserInfos: links">
             <Flex sx={{ alignItems: 'center', width: '100%', wrap: 'nowrap' }}>
-              <Text mb={2} mt={7} medium>
+              <Text mb={2} mt={7} sx={{ fontSize: 2 }}>
                 Contacts & links *
               </Text>
             </Flex>
             <FieldArray name="links" initialValue={links}>
               {({ fields }) => (
                 <>
-                  {fields.map((name, i: number) => (
-                    <ProfileLinkField
-                      key={name}
-                      name={name}
-                      onDelete={() => {
-                        fields.remove(i)
-                      }}
-                      index={i}
-                    />
-                  ))}
+                  {fields
+                    ? fields.map((name, i: number) => (
+                        <ProfileLinkField
+                          key={fields.value[i].key}
+                          name={name}
+                          onDelete={() => {
+                            fields.remove(i)
+                          }}
+                          index={i}
+                          isDeleteEnabled={i > 0 || (fields as any).length > 1}
+                        />
+                      ))
+                    : null}
                   <Button
                     type="button"
                     data-cy="add-link"
@@ -203,7 +228,7 @@ export class UserInfosSection extends React.Component<IProps, IState> {
                 </>
               )}
             </FieldArray>
-          </>
+          </Box>
         </Box>
       </FlexSectionContainer>
     )

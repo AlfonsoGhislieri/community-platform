@@ -1,8 +1,7 @@
 node_modules
 functions
-functions-cron
 build
-cypress
 lib
 storybook-static
 dist
+shared/lib

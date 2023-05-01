@@ -1,3 +1,4 @@
+/* global module */
 module.exports = {
   mainSidebar: [
     {
@@ -9,8 +10,8 @@ module.exports = {
       type: 'category',
       label: 'How To Contribute',
       items: [
+        'Contributing/start-contributing',
         'Contributing/bounties',
-        'Contributing/maintainer',
         {
           type: 'category',
           label: 'Writing Documentation',
@@ -41,7 +42,9 @@ module.exports = {
       items: [
         'Backend Development/BackendOverview',
         'Backend Development/firebase-emulators-docker',
+        'Backend Development/firestore-backup',
         'Backend Development/integrations',
+        'Backend Development/tests',
       ],
     },
     {

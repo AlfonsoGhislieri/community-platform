@@ -1,4 +1,5 @@
-import { PROFILE_TYPES } from 'src/mocks/user_pp.mock'
+import { getSupportedProfileTypes } from 'src/modules/profile'
+import { ProfileType } from 'src/modules/profile/types'
 
 // Highlights
 import CollectionHighlight from 'src/assets/images/highlights/highlight-collection-point.svg'
@@ -10,32 +11,34 @@ import MemberHighlight from 'src/assets/images/highlights/highlight-member.svg'
 // assets profileType
 import MemberBadge from 'src/assets/images/badges/pt-member.svg'
 
-function findWordspaceHighlight(workspaceType?: string): string {
+import type { PlatformTheme } from 'oa-themes'
+
+const findWordspaceHighlight = (workspaceType?: string): string => {
   switch (workspaceType) {
-    case 'workspace':
+    case ProfileType.WORKSPACE:
       return WorkspaceHighlight
-    case 'member':
+    case ProfileType.MEMBER:
       return MemberHighlight
-    case 'machine-builder':
+    case ProfileType.MACHINE_BUILDER:
       return MachineHighlight
-    case 'community-builder':
+    case ProfileType.COMMUNITY_BUILDER:
       return LocalCommunityHighlight
-    case 'collection-point':
+    case ProfileType.COLLECTION_POINT:
       return CollectionHighlight
     default:
       return MemberHighlight
   }
 }
 
-function findWorkspaceBadgeNullable(
+const findWorkspaceBadgeNullable = (
   workspaceType?: string,
   useCleanImage?: boolean,
-): string | null {
+): string | null => {
   if (!workspaceType) {
     return null
   }
 
-  const foundProfileTypeObj = PROFILE_TYPES.find(
+  const foundProfileTypeObj = getSupportedProfileTypes().find(
     (type) => type.label === workspaceType,
   )
 
@@ -50,16 +53,17 @@ function findWorkspaceBadgeNullable(
   return foundProfileTypeObj.imageSrc || null
 }
 
-function findWorkspaceBadge(
+const findWorkspaceBadge = (
   workspaceType?: string,
   ifCleanImage?: boolean,
   verifiedUser?: boolean,
-): string {
+  currentTheme?: PlatformTheme,
+): string => {
   if (!workspaceType) {
     return MemberBadge
   }
 
-  const foundProfileTypeObj = PROFILE_TYPES.find(
+  const foundProfileTypeObj = getSupportedProfileTypes(currentTheme).find(
     (type) => type.label === workspaceType,
   )
   if (foundProfileTypeObj) {

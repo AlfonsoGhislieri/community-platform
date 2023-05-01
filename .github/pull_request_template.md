@@ -1,7 +1,6 @@
 PR Checklist
 
 - [ ] - Commit [messages are descriptive](https://github.com/ONEARMY/community-platform/blob/master/CONTRIBUTING.md#--commit-style-guide), it will be used in our [Release Notes](https://github.com/ONEARMY/community-platform/releases/)
-- [ ] - Latest `master` branch merged
 
 PR Type
 
@@ -30,4 +29,4 @@ Thanks for the contribution! We try to make sure all PRs are reviewed ahead of a
 
 If the PR is working as intended it'll be merged and included in the next platform release, if not changes will be requested and re-reviewed once updated.
 
-If you need more immediate feedback you can try reaching out on slack in the `platform-dev` channel.
+If you need more immediate feedback you can try reaching out on Discord in the [Community Platform `development` channel](https://discord.com/channels/586676777334865928/938781727017558018).

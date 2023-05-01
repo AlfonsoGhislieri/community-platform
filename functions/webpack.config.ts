@@ -22,10 +22,7 @@ import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 import webpack from 'webpack'
 
-import { CleanWebpackPlugin } from 'clean-webpack-plugin'
-import GenerateJsonPlugin from 'generate-json-webpack-plugin'
-
-import PackageJson from './package.json'
+import CopyWebpackPlugin from 'copy-webpack-plugin'
 
 const config: webpack.Configuration = {
   target: 'node',
@@ -52,19 +49,31 @@ const config: webpack.Configuration = {
     ],
   },
   plugins: [
-    // Copy package json for upload
-    // new CopyPlugin({
-    //   patterns: [{ from: 'package.dist.json', to: 'package.json' }],
-    // }),
-    // clear dist folder
-    new CleanWebpackPlugin(),
-    // copy package.json
-    new GenerateJsonPlugin('package.json', generatePackageJson(), null, 2),
+    new CopyWebpackPlugin({
+      patterns: [
+        // rewrite package.json to remove workspace refs
+        {
+          from: path.resolve(__dirname, 'package.json'),
+          to: 'package.json',
+          transform: (content) => {
+            const packageJson = JSON.parse(content.toString('utf8'))
+            const updatedPackageJson = rewritePackageJson(packageJson)
+            return Buffer.from(JSON.stringify(updatedPackageJson))
+          },
+        },
+        // copy src index.html to be served during seoRender function
+        {
+          from: path.resolve(__dirname, '../build/index.html'),
+          to: 'index.html',
+        },
+      ],
+    }),
   ],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
     libraryTarget: 'commonjs',
+    clean: true,
   },
   optimization: {
     minimize: false,
@@ -89,8 +98,7 @@ export default config
  *
  * Take the existing package.json and create a minimal copy without workspace entries
  */
-function generatePackageJson() {
-  const json = PackageJson
+function rewritePackageJson(json: any) {
   const workspacePrefixes = ['oa-', 'one-army', 'onearmy', '@oa', '@onearmy']
   // TODO - could generate actual workspace list from `yarn workspace list --json`
   // remove workspace dependencies

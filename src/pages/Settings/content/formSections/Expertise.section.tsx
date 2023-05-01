@@ -1,42 +1,50 @@
 import * as React from 'react'
 
-import Flex from 'src/components/Flex'
-import Heading from 'src/components/Heading'
-import Text from 'src/components/Text'
-import { Box } from 'theme-ui'
-import { FlexSectionContainer, ArrowIsSectionOpen } from './elements'
+import { Flex, Heading, Box, Text } from 'theme-ui'
+import { FlexSectionContainer } from './elements'
 import { FieldArray } from 'react-final-form-arrays'
-import { MACHINE_BUILDER_XP } from 'src/mocks/user_pp.mock'
 import { CustomCheckbox } from './Fields/CustomCheckbox.field'
+// TODO: Remove direct usage of Theme
+import { preciousPlasticTheme } from 'oa-themes'
+const theme = preciousPlasticTheme.styles
+import type { IMAchineBuilderXp } from 'src/models'
 
 interface IProps {
   required: boolean
 }
 
+const MACHINE_BUILDER_XP: IMAchineBuilderXp[] = [
+  {
+    label: 'electronics',
+  },
+  {
+    label: 'machining',
+  },
+  {
+    label: 'welding',
+  },
+  {
+    label: 'assembling',
+  },
+  {
+    label: 'mould-making',
+  },
+]
+
 export class ExpertiseSection extends React.Component<IProps, any> {
   constructor(props: any) {
     super(props)
-    this.state = {
-      isOpen: true,
-    }
   }
 
   render() {
-    const { isOpen } = this.state
     const { required } = this.props
     return (
       <FlexSectionContainer>
         <Flex sx={{ justifyContent: 'space-between' }}>
-          <Heading small>Expertise</Heading>
-          <ArrowIsSectionOpen
-            onClick={() => {
-              this.setState({ isOpen: !isOpen })
-            }}
-            isOpen={isOpen}
-          />
+          <Heading variant="small">Expertise</Heading>
         </Flex>
-        <Box sx={{ display: isOpen ? 'block' : 'none' }}>
-          <Text regular my={4}>
+        <Box>
+          <Text mt={4} mb={4}>
             What are you specialised in ? *
           </Text>
           <Flex sx={{ flexWrap: ['wrap', 'wrap', 'nowrap'] }}>
@@ -75,7 +83,18 @@ export class ExpertiseSection extends React.Component<IProps, any> {
               )}
             </FieldArray>
           </Flex>
-          {required && <Text color="red">Choose at least one expertise </Text>}
+          {required && (
+            <Text
+              color={theme.colors.error}
+              sx={{
+                fontSize: 0.5,
+                marginLeft: 1,
+                marginRight: 1,
+              }}
+            >
+              Choose at least one expertise
+            </Text>
+          )}
         </Box>
       </FlexSectionContainer>
     )

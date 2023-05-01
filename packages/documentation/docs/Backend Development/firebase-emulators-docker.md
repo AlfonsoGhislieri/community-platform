@@ -1,4 +1,7 @@
-# Firebase Emulators
+---
+id: firebase-emulators-docker
+title: Firestore Emulators
+---
 
 In order to test backend functions locally, firebase provides a suite of emulators to mimic most functionality seen online (e.g firestore, storage, functions, triggers etc.)
 
@@ -63,7 +66,7 @@ You can see the version of data used in the command line output, e.g. data expor
 
 ### User Login
 
-By default the image comes preloaded with user auth accounts as found in [shared\mocks\auth-users.ts](https://github.com/ONEARMY/community-platform/tree/master/shared/mocks/auth-users.ts). This means you can login as any of these users, e.g.
+By default the image comes preloaded with user auth accounts as found in [shared\mocks\authUsers.ts](https://github.com/ONEARMY/community-platform/tree/master/shared/mocks/authUsers.ts). This means you can login as any of these users, e.g.
 
 ```
 email: 'demo_admin@example.com',
@@ -132,15 +135,15 @@ A custom image can be built and run by passing custom repo or tag args to the bu
 yarn workspace oa-emulators-docker build --repo=my_custom_repo --tag=my_custom_tag
 ```
 
-If just intending to test locally a blank `--repo=` can be provided to avoid trying to pull an image from dockerhub
-
-That specific image can then either be uploaded to dockerhub (assuming the repo name provided matches a personal repo configured locally) and/or run directly with the start command
+If just intending to test locally a blank `--repo=` can be provided to avoid trying to pull an image from dockerhub and run locally
 
 ```
-yarn workspace oa-emulators-docker start --repo=my_custom_repo --tag=my_custom_tag
+yarn workspace oa-emulators-docker build --repo=
 ```
 
-Note - this will only start the emulators, to run the frontend you will also need to run the rest of the scripts found in the src package.json `start:emulated:docker` script separately as required
+```
+yarn start:emulated:docker:local
+```
 
 ## Troubleshooting
 

@@ -1,54 +1,17 @@
 import 'src/assets/css/slick.min.css'
-import type { IUserPP } from 'src/models/user_pp.models'
+import type { IUserPP } from 'src/models/userPreciousPlastic.models'
 import type { IUploadedFileMeta } from 'src/stores/storage'
-
-import { Box, Image } from 'theme-ui'
+import { Box, Image, Flex, Heading, Card, Paragraph } from 'theme-ui'
 import DefaultMemberImage from 'src/assets/images/default_member.svg'
-import Flex from 'src/components/Flex'
-import Heading from 'src/components/Heading'
-import { FlagIcon } from 'oa-components'
-import { Text } from 'src/components/Text'
-import theme from 'src/themes/styled.theme'
-import styled from '@emotion/styled'
-import { UserStats } from './UserStats'
+import { MemberBadge, UserStatistics, Username } from 'oa-components'
 import UserContactAndLinks from './UserContactAndLinks'
 import { UserAdmin } from './UserAdmin'
-import { MemberBadge } from 'oa-components'
+import { isUserVerified } from 'src/common/isUserVerified'
+import { useUserUsefulCount } from 'src/common/userUsefulCount'
 
 interface IProps {
   user: IUserPP
 }
-
-const ProfileWrapper = styled(Box)`
-  display: block;
-  border: 2px solid black;
-  border-radius: ${theme.space[2]}px;
-  align-self: center;
-  width: 100%;
-  max-width: 42em;
-  position: relative;
-`
-
-const ProfileContentWrapper = styled(Flex)`
-  background-color: ${theme.colors.white};
-  border-radius: 10px;
-`
-
-const MemberPicture = styled('figure')`
-  display: block;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  max-width: none;
-  overflow: hidden;
-
-  img {
-    outline: 100px solid red;
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-  }
-`
 
 export const MemberProfile = ({ user }: IProps) => {
   const userLinks = user?.links.filter(
@@ -56,10 +19,26 @@ export const MemberProfile = ({ user }: IProps) => {
   )
 
   const userCountryCode =
-    user.location?.countryCode || user.country?.toLowerCase() || null
+    user.location?.countryCode || user.country?.toLowerCase() || undefined
+
+  const memberPictureSource =
+    user.coverImages && user.coverImages[0]
+      ? (user.coverImages[0] as IUploadedFileMeta).downloadUrl
+      : DefaultMemberImage
 
   return (
-    <ProfileWrapper mt={8} mb={6} data-cy="MemberProfile">
+    <Card
+      mt={8}
+      mb={6}
+      data-cy="MemberProfile"
+      sx={{
+        position: 'relative',
+        overflow: 'visible',
+        maxWidth: '42em',
+        width: '100%',
+        margin: '0 auto',
+      }}
+    >
       <MemberBadge
         profileType="member"
         size={50}
@@ -70,23 +49,55 @@ export const MemberProfile = ({ user }: IProps) => {
           marginLeft: 50 * -0.5,
           marginTop: 50 * -0.5,
         }}
+        useLowDetailVersion
       />
-      <ProfileContentWrapper px={4} py={4}>
-        <Box mr={3} style={{ flexGrow: 1, minWidth: 'initial' }}>
-          <MemberPicture>
+      <Flex
+        px={4}
+        py={4}
+        sx={{ borderRadius: 1, flexDirection: ['column', 'row'] }}
+      >
+        <Box sx={{ flexGrow: 1, minWidth: 'initial', mr: 3 }}>
+          <Box
+            sx={{
+              display: 'block',
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              maxWidth: 'none',
+              overflow: 'hidden',
+              margin: '0 auto',
+              mb: 3,
+            }}
+          >
             <Image
-              src={
-                user.coverImages[0]
-                  ? (user.coverImages[0] as IUploadedFileMeta).downloadUrl
-                  : DefaultMemberImage
-              }
+              loading="lazy"
+              src={memberPictureSource}
+              sx={{
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%',
+              }}
             />
-          </MemberPicture>
-          <UserStats user={user} />
+          </Box>
+          <UserStatistics
+            userName={user.userName}
+            country={user.location?.country}
+            isVerified={isUserVerified(user.userName)}
+            isSupporter={!!user.badges?.supporter}
+            howtoCount={
+              user.stats ? Object.keys(user.stats!.userCreatedHowtos).length : 0
+            }
+            eventCount={
+              user.stats ? Object.keys(user.stats!.userCreatedEvents).length : 0
+            }
+            // ** TODO: Beta-tester Authentication needs to be removed from useUserUsefulCount
+            // ** once aggregations are fixed
+            usefulCount={useUserUsefulCount(user) ?? 0}
+          />
         </Box>
         <Flex
-          mt={3}
-          ml={3}
+          mt={[0, 3]}
+          ml={[0, 3]}
           sx={{ flexGrow: 2, width: '100%', flexDirection: 'column' }}
         >
           <Flex
@@ -95,29 +106,16 @@ export const MemberProfile = ({ user }: IProps) => {
               pt: ['40px', '40px', '0'],
             }}
           >
-            {userCountryCode && (
-              <FlagIcon
-                mr={2}
-                code={userCountryCode}
-                style={{ display: 'inline-block' }}
-              />
-            )}
-            <Text
-              large
-              my={2}
-              sx={{
-                color: `${theme.colors.lightgrey} !important`,
-                wordBreak: 'break-word',
+            <Username
+              user={{
+                userName: user.userName,
+                countryCode: userCountryCode,
               }}
-              data-cy="userName"
-            >
-              {user.userName}
-            </Text>
+              isVerified={isUserVerified(user.userName)}
+            />
           </Flex>
           <Box sx={{ flexDirection: 'column' }} mb={3}>
             <Heading
-              medium
-              bold
               color={'black'}
               style={{ wordWrap: 'break-word' }}
               data-cy="userDisplayName"
@@ -125,24 +123,13 @@ export const MemberProfile = ({ user }: IProps) => {
               {user.displayName}
             </Heading>
           </Box>
-          {user.about && (
-            <Text
-              preLine
-              paragraph
-              mt="0"
-              mb="20px"
-              color={theme.colors.grey}
-              sx={{ width: ['80%', '100%'] }}
-            >
-              {user.about}
-            </Text>
-          )}
+          {user.about && <Paragraph>{user.about}</Paragraph>}
           <UserContactAndLinks links={userLinks} />
           <Box mt={3}>
             <UserAdmin user={user} />
           </Box>
         </Flex>
-      </ProfileContentWrapper>
-    </ProfileWrapper>
+      </Flex>
+    </Card>
   )
 }

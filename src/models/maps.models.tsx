@@ -1,5 +1,6 @@
 import type { ISODateString, IModerable } from './common.models'
-import type { WorkspaceType, ProfileTypeLabel } from './user_pp.models'
+import type { WorkspaceType } from './userPreciousPlastic.models'
+import type { ProfileTypeLabel } from '../modules/profile/types'
 
 /**
  * Map pins keep minimal information required for pin display.
@@ -42,6 +43,7 @@ export interface IMapPinDetail {
   profileUrl: string
   heroImageUrl: string
   verifiedBadge: boolean
+  country: string | null
 }
 
 export interface ILatLng {

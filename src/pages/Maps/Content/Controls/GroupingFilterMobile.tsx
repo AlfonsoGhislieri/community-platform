@@ -1,16 +1,18 @@
 import { Component } from 'react'
-import Text from 'src/components/Text'
-import type { IMapGrouping } from 'src/models/maps.models'
+import { Button } from 'oa-components'
+import { Flex, Text, Image } from 'theme-ui'
+
 import checkmarkIcon from 'src/assets/icons/icon-checkmark.svg'
-import { Flex, Image } from 'theme-ui'
-import { inject } from 'mobx-react'
+import crossClose from 'src/assets/icons/cross-close.svg'
+
 import type { MapsStore } from 'src/stores/Maps/maps.store'
+import type { FilterGroup } from './transformAvailableFiltersToGroups'
 
 interface IProps {
-  items: Array<IMapGrouping>
-  entityType: string
-  onChange?: (selectedItems: string[]) => void
+  items: FilterGroup[]
   selectedItems: Array<string>
+  onChange?: (selectedItems: string[]) => void
+  onClose: () => void
 }
 
 interface IState {
@@ -20,86 +22,91 @@ interface IInjectedProps extends IProps {
   mapsStore: MapsStore
 }
 
-@inject('mapsStore')
 class GroupingFilterMobile extends Component<IProps, IState> {
+  addOrRemoveFilter = (selected, item) => {
+    if (selected.includes(item)) {
+      return selected.filter((selectedItem) => selectedItem !== item)
+    } else {
+      return [...selected, item]
+    }
+  }
   constructor(props: IProps) {
     super(props)
-    this.state = {
-      initialItems: this.asOptions(props.items),
-    }
   }
 
   get injected() {
     return this.props as IInjectedProps
   }
 
-  addOrRemove = (array, item) => {
-    // from https://stackoverflow.com/a/52531625
-    const exists = array.includes(item)
-    if (exists) {
-      return array.filter((c) => {
-        return c !== item
-      })
-    } else {
-      const result = array
-      result.push(item)
-      return result
-    }
-  }
-
   handleChange(item: string) {
     if (this.props.onChange) {
-      this.props.onChange(this.addOrRemove(this.props.selectedItems, item))
+      this.props.onChange(
+        this.addOrRemoveFilter(this.props.selectedItems, item),
+      )
     }
-  }
-
-  asOptions(items: Array<IMapGrouping>) {
-    return items
-      .filter((item) => {
-        return !item.hidden
-      })
-      .map((item) => ({
-        label: item.displayName,
-        value: item.subType ? item.subType : item.type,
-        icon: item.icon,
-        number: this.injected.mapsStore.getPinsNumberByFilterType(
-          item.subType ? item.subType.split(' ') : item.type.split(' '),
-        ),
-      }))
   }
 
   render() {
-    const { items, entityType } = this.props
-    const options = this.asOptions(items)
-    const { selectedItems } = this.props
-
+    const { items, selectedItems } = this.props
     return (
       <Flex sx={{ flexDirection: 'column' }}>
-        <Text medium py="10px">
-          {entityType === 'place' ? 'All Workspaces' : 'Others'}
-        </Text>
-        {options.map((filter) => (
-          <Flex
-            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-            mt="5px"
-            onClick={(evt) => {
-              evt.preventDefault()
-              evt.stopPropagation()
-              this.handleChange(filter.value)
-            }}
-            key={filter.label}
-          >
-            <Flex sx={{ alignItems: 'center' }}>
-              <Image width="30px" src={filter.icon} />
-              <Text medium ml="10px">
-                {filter.label} ({filter.number})
+        <Flex p={0} mx={-1} sx={{ justifyContent: 'space-between' }}>
+          <Text sx={{ fontWeight: 'bold' }}>Select filters</Text>
+          <Image
+            loading="lazy"
+            width="25px"
+            src={crossClose}
+            alt="cross-close"
+            onClick={() => this.props.onClose()}
+          />
+        </Flex>
+
+        {items.map((item, idx) => {
+          return (
+            <div key={idx}>
+              <Text
+                sx={{
+                  fontSize: 2,
+                  display: 'block',
+                  paddingTop: 2,
+                  paddingBottom: 2,
+                }}
+              >
+                {item.label}
               </Text>
-            </Flex>
-            {selectedItems.includes(filter.value) && (
-              <Image src={checkmarkIcon} width="20px" />
-            )}
-          </Flex>
-        ))}
+
+              {item.options.map((filter) => (
+                <Flex
+                  sx={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                  mt="5px"
+                  onClick={(evt) => {
+                    evt.preventDefault()
+                    evt.stopPropagation()
+                    this.handleChange(filter.value)
+                  }}
+                  key={filter.label}
+                >
+                  <Flex sx={{ alignItems: 'center' }}>
+                    {filter.imageElement}
+                    <Text sx={{ fontSize: 2 }} ml="10px">
+                      {filter.label} ({filter.number})
+                    </Text>
+                  </Flex>
+                  {selectedItems.includes(filter.value) && (
+                    <Image loading="lazy" src={checkmarkIcon} width="20px" />
+                  )}
+                </Flex>
+              ))}
+            </div>
+          )
+        })}
+
+        <Button mt={3} onClick={this.props.onClose}>
+          Apply filters
+        </Button>
       </Flex>
     )
   }
